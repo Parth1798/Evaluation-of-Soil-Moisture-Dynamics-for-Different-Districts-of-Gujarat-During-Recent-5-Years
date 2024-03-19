@@ -1,0 +1,83 @@
+import pandas as pd
+
+df=pd.read_csv('C:\\Users\\parth\\Downloads\\gujarat_moisture_Analysis.csv')
+
+l=list(df.columns)
+l.pop(0)
+l.pop(0)
+l.pop()
+l.pop()
+
+new_l=[]
+for v in range(len(l)):
+    c=l[v]
+    c=c[1:]
+    f=len(c)
+    if f>5:
+        k=c[:f-2]
+        h=c[4:f]
+    else:
+        k=c[:f-1]
+        h=c[-1]
+    
+    p=f'{k} {h}'
+    new_l.append(p)
+new_l
+
+
+import arcpy
+from arcpy import env
+from arcpy.sa import *
+
+# Set environment workspace and options
+arcpy.env.workspace = r'C:\Users\parth\OneDrive\Desktop\Parth makwana\Moisture_project'
+arcpy.env.overwriteOutput = True
+arcpy.env.extent = 'MAXOF'
+arcpy.env.outputCoordinateSystem = arcpy.SpatialReference(4326)
+
+# Define the paths to shapefiles and output raster
+mask_shapefile = 'India_State_Boundary.shp'
+input_data = 'points_finalt.shp'
+
+# Define kriging parameters
+cellSize = 0.05
+lagSize = 0.5780481172534
+majorRange = 6
+partialSill = 3.304292110
+nugget = 0.002701348
+kRadius = RadiusFixed(20000, 1)
+
+df=pd.read csv()
+l=list(df.columns)
+l.pop(0)
+l.pop(0)
+l.pop()
+l.pop()
+
+for i in range(len(l)):
+    c=l[i]
+    c=c[1:]
+    f=len(c)
+    if f>5:
+        k=c[:f-2]
+        h=c[4:f]
+    else:
+        k=c[:f-1]
+        h=c[-1]
+
+    kModelUniversalObj = KrigingModelUniversal('Spherical', lagSize, majorRange, partialSill, nugget)
+    # Perform kriging
+    OutKriging = Kriging(input_data, l[i], kModelUniversalObj, cellSize, kRadius)
+    KrigMask = ExtractByMask(OutKriging, mask_shapefile)
+    lyrx_file = r"C:\Users\parth\OneDrive\Desktop\Parth makwana\Moisture_project\lyr.lyrx"
+    arcpy.ApplySymbologyFromLayer_management(KrigMask, in_symbology_layer=lyrx_file)
+    arcpy.management.Delete(OutKriging)
+    project = arcpy.mp.ArcGISProject("CURRENT")
+    layout = project.listLayouts()[-1]
+    layout_element = layout.listElements("TEXT_ELEMENT")[0]
+    layout_element.text=f'Gujarat {h}-{k}'
+    export_path = f"C:\\Users\\parth\\OneDrive\\Desktop\\Parth makwana\\Moisture_project\\gujarat_png\\Gujarat {h}-{k}.png"
+    resolution = 100
+    layout.exportToPNG(export_path, resolution=resolution)
+    i+=1
+    arcpy.management.Delete(KrigMask)
